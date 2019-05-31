@@ -135,6 +135,7 @@ public class MainActivity extends AppCompatActivity
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     boolean handled = true;
+    Intent intent;
     switch (item.getItemId()) {
       case R.id.play:
         resumeGame();
@@ -143,8 +144,17 @@ public class MainActivity extends AppCompatActivity
         pauseGame();
         break;
       case R.id.settings:
-        Intent intent = new Intent(this, SettingsActivity.class);
+        intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
+        break;
+      case R.id.status:
+        intent = new Intent(this, StatusActivity.class);
+        intent.putExtra(getString(R.string.game_data_key), game);
+        startActivity(intent);//when we creat an intent to start and activity, we can attach
+        // data to our intent saying, "Here, carry this forward and allow the activity to take the
+        // data that you carry with you."
+        //TODO Write game data to intent.
+
         break;
       default:
         handled = super.onOptionsItemSelected(item);
