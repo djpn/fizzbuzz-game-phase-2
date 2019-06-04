@@ -153,6 +153,11 @@ public class MainActivity extends AppCompatActivity
     boolean handled = true;
     Intent intent;
     switch (item.getItemId()) {
+      case R.id.reset:
+        //TODO Combine invocations of Game constructor.
+        game = new Game(timeLimit, numDigits, gameDuration);
+        pauseGame();
+        break;
       case R.id.play:
         resumeGame();
         break;
@@ -328,6 +333,15 @@ public class MainActivity extends AppCompatActivity
       });
     }
 
+  }
+
+  private class GameTimeoutTask extends TimerTask {
+
+    @Override
+    public void run() {
+      complete = true;
+      pauseGame();
+    }
   }
 
   private class FlingListener extends GestureDetector.SimpleOnGestureListener {
