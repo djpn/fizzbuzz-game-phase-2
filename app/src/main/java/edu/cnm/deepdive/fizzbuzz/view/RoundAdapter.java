@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -22,15 +21,23 @@ public class RoundAdapter extends ArrayAdapter<Round> {//each constructor has as
   // the invocation of the parent (super class [no parameter constructor])
 
   private String[] categoryNames;
-  private Drawable correct;
-  private Drawable incorrect;
+  private Drawable correctDrawable;
+  private Drawable incorrectDrawable;
+  private String correctDescription;
+  private String incorrectDescription;
+  private int correctColor;
+  private int incorrectColor;
+
 
 
   public RoundAdapter(@NonNull Context context, @NonNull List<Round> objects) {
     super(context, R.layout.round_item, objects); //removed "int resource" and replaced w/ R.lay....
-    correct = context.getDrawable(R.drawable.check);
-    incorrect = context.getDrawable(R.drawable.error);
-
+    correctDrawable = context.getDrawable(R.drawable.check);
+    incorrectDrawable = context.getDrawable(R.drawable.error);
+    correctDescription = context.getString(R.string.correct_description);
+    incorrectDescription = context.getString(R.string.incorrect_description);
+    correctColor = ContextCompat.getColor(getContext(), R.color.correct);
+    incorrectColor = ContextCompat.getColor(getContext(), R.color.incorrect);
     Category[] categories = Category.values();
     categoryNames = new String[categories.length];
     Resources res = context.getResources();
@@ -56,10 +63,15 @@ public class RoundAdapter extends ArrayAdapter<Round> {//each constructor has as
     // displays
     valueDisplay.setText(Integer.toString(round.getValue()));
     categoryDisplay.setText(categoryNames[round.getCategory().ordinal()]);
-    resultDisplay.setImageDrawable(round.isCorrect() ? correct : incorrect);
-    layout.setBackgroundColor(ContextCompat.getColor(getContext(), round.isCorrect() ?
-        R.color.correct :
-        R.color.incorrect));
+    if (round.isCorrect()) {
+      resultDisplay.setImageDrawable(correctDrawable);
+      resultDisplay.setContentDescription(correctDescription);
+      layout.setBackgroundColor(correctColor);
+    } else {
+      resultDisplay.setImageDrawable(incorrectDrawable);
+      resultDisplay.setContentDescription(incorrectDescription);
+      layout.setBackgroundColor(incorrectColor);
+    }
     return layout;//push errythang off the stack
   }
 }
