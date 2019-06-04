@@ -4,12 +4,6 @@
   xmlns:app="http://schemas.android.com/apk/res-auto">
 
   <item
-    android:id="@+id/reset"
-    android:title="@string/reset"
-    android:icon="@drawable/replay"
-    app:showAsAction="always"/>
-
-  <item
     android:id="@+id/play"
     android:title="@string/play"
     android:icon="@drawable/play"
@@ -21,6 +15,12 @@
     android:icon="@drawable/pause"
     android:visible="false"
     android:enabled="false"
+    app:showAsAction="always"/>
+
+  <item
+    android:id="@+id/reset"
+    android:title="@string/reset"
+    android:icon="@drawable/replay"
     app:showAsAction="always"/>
 
   <item

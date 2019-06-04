@@ -51,8 +51,10 @@ public class MainActivity extends AppCompatActivity
   private int numDigits;
   private int timeLimit;
   private int gameDuration;
-  private long gameStart;
+  private long gameTimerStart;
   private long gameTimeElapsed;
+  String gameDataKey;
+  String gameTimeElapsedKey;
 
 
   /**
@@ -73,11 +75,12 @@ public class MainActivity extends AppCompatActivity
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
     preferences.registerOnSharedPreferenceChangeListener(this);
     readSettings();
+    gameDataKey = getString(R.string.game_time_key);
+    gameTimeElapsedKey = getString(R.string.game_time_elapsed_key);
 
     if (savedInstanceState != null) {
-      String gameDataKey = getString(R.string.game_time_key);
       game = (Game) savedInstanceState.getSerializable(gameDataKey);
-
+      gameTimeElapsed = savedInstanceState.getLong(gameTimeElapsedKey, 0);
     }
     if (game == null) {
       game = new Game(timeLimit, numDigits, gameDuration);
@@ -101,7 +104,7 @@ public class MainActivity extends AppCompatActivity
   @Override
   protected void onPause() {
     super.onPause();
-    // TODO Record any in-progress data from timers, etc. to fields.
+    pauseGame();
   }
 
   /**
@@ -112,8 +115,8 @@ public class MainActivity extends AppCompatActivity
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
-    String gameDataKey = getString(R.string.game_data_key);
     outState.putSerializable(gameDataKey, game);
+    outState.putLong(gameTimeElapsedKey, gameTimeElapsed);
   }
 
   /**
@@ -141,10 +144,10 @@ public class MainActivity extends AppCompatActivity
   public boolean onPrepareOptionsMenu(Menu menu) {
     MenuItem play = menu.findItem(R.id.play);
     MenuItem pause = menu.findItem(R.id.pause);
-    play.setEnabled(!running);
-    play.setVisible(!running);
-    pause.setEnabled(running);
-    pause.setVisible(running);
+    play.setEnabled(!running && !complete);
+    play.setVisible(!running && !complete);
+    pause.setEnabled(running && !complete);
+    pause.setVisible(running && !complete);
     return true;
   }
 
@@ -162,6 +165,8 @@ public class MainActivity extends AppCompatActivity
       case R.id.reset:
         //TODO Combine invocations of Game constructor.
         game = new Game(timeLimit, numDigits, gameDuration);
+        gameTimeElapsed = 0;
+        complete = false;
         pauseGame();
         break;
       case R.id.play:
@@ -241,26 +246,41 @@ public class MainActivity extends AppCompatActivity
 
   private void pauseGame() {
     running = false;
-    stopTimer();
+    stopValueTimer();
+    stopGameTimer();
+    valueDisplay.setText("");
     // TODO Update any additional necessary fields.
     invalidateOptionsMenu();
   }
 
   private void resumeGame() {
     running = true;
-
     if (game == null) {
       game = new Game(timeLimit, numDigits, gameDuration);
+      gameTimeElapsed = 0;
     }
     updateValue();
+    startGameTimer();
+    startValueTimer();
     // TODO Update any additional necessary fields.
     invalidateOptionsMenu();
   }
 
-  private void stopTimer() {
+  private void stopValueTimer() {
     if (valueTimer != null) {
       valueTimer.cancel();
       valueTimer = null;
+    }
+  }
+
+  private void stopGameTimer() {
+    if (gameTimer != null) {
+      gameTimer.cancel();
+      gameTimer = null; //made null to allow garbage collector to steal the orphaned object and sell
+      // it into entertainment slavery.
+      gameTimeElapsed += System.currentTimeMillis() - gameTimerStart;//lets one take a game and
+      //split it up whenever one needs to, while keeping the timer in sync with the appropriate
+      //and expected remaining time.
     }
   }
 
@@ -320,13 +340,18 @@ public class MainActivity extends AppCompatActivity
     displayRect.right = (containerWidth + textWidth) / 2;
   }
 
-  private void startTimer() {
+  private void startValueTimer() {
     if (timeLimit != 0) {
       valueTimer = new Timer();
       valueTimer.schedule(new TimeoutTask(), timeLimit * 1000);
     }
   }
+  private void startGameTimer() {
+    gameTimer = new Timer();
+    gameTimer.schedule(new GameTimeoutTask(), gameDuration * 1000L - gameTimeElapsed );
+    gameTimerStart = System.currentTimeMillis();
 
+  }
   private class TimeoutTask extends TimerTask {
 
     @Override
@@ -338,7 +363,7 @@ public class MainActivity extends AppCompatActivity
         //TODO (Personal) Understand what the hay is going on in this lambda.
         recordRound(null);
         updateValue();
-        startTimer();
+        startValueTimer();
       });
     }
 
@@ -349,7 +374,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void run() {
       complete = true;
-      pauseGame();
+      runOnUiThread(MainActivity.this::pauseGame);//learn this lambda
     }
   }
 
@@ -381,7 +406,7 @@ public class MainActivity extends AppCompatActivity
           deltaX * deltaX / radiusX / radiusX + deltaY * deltaY / radiusY / radiusY;
       double speed = Math.hypot(velocityX, velocityY);
       if (speed >= SPEED_THRESHOLD && ellipticalDistance >= 1) {
-        stopTimer();
+        stopValueTimer();
         Category selection;
         if (Math.abs(deltaY) * containerWidth <= Math.abs(deltaX) * containerHeight) {
           if (deltaX > 0) {
@@ -398,7 +423,7 @@ public class MainActivity extends AppCompatActivity
         }
         recordRound(selection);
         updateValue();
-        startTimer();
+        startValueTimer();
         handled = true;
       }
       return handled;
