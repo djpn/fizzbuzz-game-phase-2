@@ -21,6 +21,7 @@ import androidx.preference.PreferenceManager;
 import edu.cnm.deepdive.fizzbuzz.R;
 import edu.cnm.deepdive.fizzbuzz.model.Game;
 import edu.cnm.deepdive.fizzbuzz.model.Round;
+import edu.cnm.deepdive.fizzbuzz.model.Round.Category;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -43,12 +44,16 @@ public class MainActivity extends AppCompatActivity
   private ViewGroup valueContainer;
   private Rect displayRect = new Rect();
   private GestureDetectorCompat detector;
-  private Timer timer;
+  private Timer valueTimer;
+  private Timer gameTimer;
   private SharedPreferences preferences;
   private Game game;
   private int numDigits;
   private int timeLimit;
   private int gameDuration;
+  private long gameStart;
+  private long gameTimeElapsed;
+
 
   /**
    * Initializes this activity when created, and when restored after {@link #onDestroy()} (for
@@ -72,6 +77,7 @@ public class MainActivity extends AppCompatActivity
     if (savedInstanceState != null) {
       String gameDataKey = getString(R.string.game_time_key);
       game = (Game) savedInstanceState.getSerializable(gameDataKey);
+
     }
     if (game == null) {
       game = new Game(timeLimit, numDigits, gameDuration);
@@ -235,22 +241,27 @@ public class MainActivity extends AppCompatActivity
 
   private void pauseGame() {
     running = false;
-    if (timer != null) {
-      timer.cancel();
-      timer = null;
-    }
+    stopTimer();
     // TODO Update any additional necessary fields.
     invalidateOptionsMenu();
   }
 
   private void resumeGame() {
     running = true;
+
     if (game == null) {
       game = new Game(timeLimit, numDigits, gameDuration);
     }
     updateValue();
     // TODO Update any additional necessary fields.
     invalidateOptionsMenu();
+  }
+
+  private void stopTimer() {
+    if (valueTimer != null) {
+      valueTimer.cancel();
+      valueTimer = null;
+    }
   }
 
   private void recordRound(Round.Category selection) {
@@ -287,19 +298,13 @@ public class MainActivity extends AppCompatActivity
   }
 
   private void updateValue() {
-    int numDigits = preferences.getInt(getString(R.string.num_digits_key), getResources()
-        .getInteger(R.integer.num_digits_default));
     int valueLimit = (int) Math.pow(10, numDigits) - 1;
-    int timeLimit = preferences.getInt(getString(R.string.time_limit_key), getResources()
-        .getInteger(R.integer.time_limit_default));
     int containerHeight = valueContainer.getHeight();
     int containerWidth = valueContainer.getWidth();
     int textHeight;
     int textWidth;
-    String valueString = Integer.toString(value);
-    if (timer != null) {
-      timer.cancel();
-    }
+    String valueString;
+
     value = 1 + rng.nextInt(valueLimit);
     valueString = Integer.toString(value);
     valueDisplay.setTranslationX(0);
@@ -313,9 +318,12 @@ public class MainActivity extends AppCompatActivity
     displayRect.bottom = (containerHeight + textHeight) / 2;
     displayRect.left = (containerWidth - textWidth) / 2;
     displayRect.right = (containerWidth + textWidth) / 2;
+  }
+
+  private void startTimer() {
     if (timeLimit != 0) {
-      timer = new Timer();
-      timer.schedule(new TimeoutTask(), timeLimit * 1000);
+      valueTimer = new Timer();
+      valueTimer.schedule(new TimeoutTask(), timeLimit * 1000);
     }
   }
 
@@ -330,6 +338,7 @@ public class MainActivity extends AppCompatActivity
         //TODO (Personal) Understand what the hay is going on in this lambda.
         recordRound(null);
         updateValue();
+        startTimer();
       });
     }
 
@@ -372,20 +381,24 @@ public class MainActivity extends AppCompatActivity
           deltaX * deltaX / radiusX / radiusX + deltaY * deltaY / radiusY / radiusY;
       double speed = Math.hypot(velocityX, velocityY);
       if (speed >= SPEED_THRESHOLD && ellipticalDistance >= 1) {
+        stopTimer();
+        Category selection;
         if (Math.abs(deltaY) * containerWidth <= Math.abs(deltaX) * containerHeight) {
           if (deltaX > 0) {
-            recordRound(Round.Category.BUZZ);
+            selection = Category.BUZZ;
           } else {
-            recordRound(Round.Category.FIZZ);
+            selection = Category.FIZZ;
           }
         } else {
           if (deltaY > 0) {
-            recordRound(Round.Category.NEITHER);
+            selection = Category.NEITHER;
           } else {
-            recordRound(Round.Category.FIZZ_BUZZ);
+            selection = Category.FIZZ_BUZZ;
           }
         }
+        recordRound(selection);
         updateValue();
+        startTimer();
         handled = true;
       }
       return handled;
