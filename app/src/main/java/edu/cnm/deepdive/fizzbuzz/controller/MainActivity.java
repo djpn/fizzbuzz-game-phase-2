@@ -1,25 +1,26 @@
 package edu.cnm.deepdive.fizzbuzz.controller;
 
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Rect;
-import android.util.Log;
+import android.os.Bundle;
 import android.view.GestureDetector;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
-import android.os.Bundle;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.preference.PreferenceManager;
 import edu.cnm.deepdive.fizzbuzz.R;
 import edu.cnm.deepdive.fizzbuzz.model.Game;
 import edu.cnm.deepdive.fizzbuzz.model.Round;
-import edu.cnm.deepdive.fizzbuzz.model.Round.Category;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity
   private Random rng = new Random();
   private int value;
   private boolean running;
+  private boolean complete;
   private TextView valueDisplay;
   private ViewGroup valueContainer;
   private Rect displayRect = new Rect();
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity
   private int numDigits;
   private int timeLimit;
   private int gameDuration;
+
   /**
    * Initializes this activity when created, and when restored after {@link #onDestroy()} (for
    * example, after a change of orientation). In the latter case, the game state is retrieved from
@@ -73,6 +76,7 @@ public class MainActivity extends AppCompatActivity
     if (game == null) {
       game = new Game(timeLimit, numDigits, gameDuration);
     }
+
   }
 
   /**
@@ -208,6 +212,9 @@ public class MainActivity extends AppCompatActivity
   @Override
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     readSettings();
+    pauseGame();
+    game = new Game(timeLimit, numDigits, gameDuration);
+
     // TODO Set any necessary flags, etc. to indicate game should be restarted.
   }
 
@@ -246,6 +253,32 @@ public class MainActivity extends AppCompatActivity
     // within another class
     Round round = new Round(value, category, selection);
     game.add(round);
+    //inflating animator object (code right below this comment)
+    ImageView indicator;
+    Animator fade = AnimatorInflater.loadAnimator(this, R.animator.indicator_fade);
+    switch (category) {
+      case FIZZ:
+        indicator = findViewById(round.isCorrect() ? R.id.correct_fizz_indicator :
+            R.id.incorrect_fizz_indicator);
+        break;
+      case BUZZ:
+        indicator = findViewById(round.isCorrect() ? R.id.correct_buzz_indicator :
+            R.id.incorrect_buzz_indicator);
+        break;
+      case FIZZ_BUZZ:
+        indicator = findViewById(round.isCorrect() ? R.id.correct_fizzbuzz_indicator :
+            R.id.incorrect_fizzbuzz_indicator);
+        break;
+      default:
+        indicator = findViewById(round.isCorrect() ? R.id.correct_neither_indicator :
+            R.id.incorrect_neither_indicator);
+        break;
+
+    }
+
+    fade.setTarget(indicator);
+    fade.start();
+
   }
 
   private void updateValue() {

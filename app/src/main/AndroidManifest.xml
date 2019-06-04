@@ -12,12 +12,16 @@
     <activity
       android:label="@string/status"
       android:parentActivityName=".controller.MainActivity"
+      android:launchMode="singleTop"
       android:name=".controller.StatusActivity"/>
     <activity
       android:label="Settings"
+      android:launchMode="singleTop"
       android:name=".controller.SettingsActivity"
       android:parentActivityName=".controller.MainActivity"/>
-    <activity android:name=".controller.MainActivity">
+    <activity
+      android:name=".controller.MainActivity"
+      android:launchMode="singleTop">
       <intent-filter>
         <action android:name="android.intent.action.MAIN"/>
 
