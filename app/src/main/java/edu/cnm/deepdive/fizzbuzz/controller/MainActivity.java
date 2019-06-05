@@ -42,11 +42,13 @@ public class MainActivity extends AppCompatActivity
   private boolean running;
   private boolean complete;
   private TextView valueDisplay;
+  private TextView clockDisplay;
   private ViewGroup valueContainer;
   private Rect displayRect = new Rect();
   private GestureDetectorCompat detector;
   private Timer valueTimer;
   private Timer gameTimer;
+  private Timer clockTimer;
   private SharedPreferences preferences;
   private Game game;
   private int numDigits;
@@ -54,9 +56,9 @@ public class MainActivity extends AppCompatActivity
   private int gameDuration;
   private long gameTimerStart;
   private long gameTimeElapsed;
-  String gameDataKey;
-  String gameTimeElapsedKey;
-
+  private String gameDataKey;
+  private String gameTimeElapsedKey;
+  private String clockFormat;
 
   /**
    * Initializes this activity when created, and when restored after {@link #onDestroy()} (for
@@ -70,6 +72,7 @@ public class MainActivity extends AppCompatActivity
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_main);
     valueDisplay = findViewById(R.id.value_display);
+    clockDisplay = findViewById(R.id.clock_display);
     valueContainer = (ViewGroup) valueDisplay.getParent();
     detector = new GestureDetectorCompat(this, new FlingListener());
     valueContainer.setOnTouchListener(this);
@@ -78,13 +81,14 @@ public class MainActivity extends AppCompatActivity
     readSettings();
     gameDataKey = getString(R.string.game_time_key);
     gameTimeElapsedKey = getString(R.string.game_time_elapsed_key);
-
+  clockFormat = getString(R.string.clock_format);
     if (savedInstanceState != null) {
       game = (Game) savedInstanceState.getSerializable(gameDataKey);
       gameTimeElapsed = savedInstanceState.getLong(gameTimeElapsedKey, 0);
     }
     if (game == null) {
       initGame();
+
     }
 
   }
@@ -284,6 +288,27 @@ public class MainActivity extends AppCompatActivity
       //split it up whenever one needs to, while keeping the timer in sync with the appropriate
       //and expected remaining time.
     }
+    if (clockTimer != null) {
+      clockTimer.cancel();
+      clockTimer = null; //clockTimer is literally only along for the ride.
+    }
+  }
+
+  private void updateClock() {
+    long remaining = gameDuration * 1000L - (System.currentTimeMillis() - gameTimerStart +
+        gameTimeElapsed);
+    int minutes;
+    double seconds;
+    if (remaining > 0) {
+      minutes = (int) (remaining / 60_000);
+      seconds = (double) (remaining % 60_000) / 1_000.0;
+
+    } else {
+      minutes = 0;
+      seconds = 0;
+    }
+  clockDisplay.setText(String.format(clockFormat, minutes, seconds));
+
   }
 
   private void recordRound(Round.Category selection) {
@@ -353,12 +378,15 @@ public class MainActivity extends AppCompatActivity
     gameTimer = new Timer();
     gameTimer.schedule(new GameTimeoutTask(), gameDuration * 1000L - gameTimeElapsed);
     gameTimerStart = System.currentTimeMillis();
+    clockTimer = new Timer();
+    clockTimer.schedule(new ClockTimerTask(), 0, 100);
   }
 
   private void initGame() {
     game = new Game(timeLimit, numDigits, gameDuration);
     complete = false;
     gameTimeElapsed = 0;
+    updateClock();
   }
 
   private class TimeoutTask extends TimerTask {
@@ -390,6 +418,15 @@ public class MainActivity extends AppCompatActivity
         //knows the instance of main activity, not the instance of the task within which it lies
         showStats();
       });//learn this lambda
+    }
+  }
+
+  private class ClockTimerTask extends TimerTask {
+
+    @Override
+    public void run() {
+      runOnUiThread(() -> updateClock());//a lot more processing on the
+      // UI thread, but okay this one time
     }
   }
 
