@@ -386,6 +386,7 @@ public class MainActivity extends AppCompatActivity
     game = new Game(timeLimit, numDigits, gameDuration);
     complete = false;
     gameTimeElapsed = 0;
+    gameTimerStart = System.currentTimeMillis();
     updateClock();
   }
 
