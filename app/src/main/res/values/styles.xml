@@ -19,4 +19,11 @@
     <item name="android:background">@color/colorPrimaryDark</item>
     <item name="android:textColor">@color/lightText</item>
   </style>
+
+  <style name="DirectionBeacon" parent = "AppTheme">
+    <item name="android:textStyle">bold</item>
+    <item name="android:textColor">@color/backgroundText</item>
+    <item name="android:textSize">36sp</item>
+    <item name="android:includeFontPadding">false</item>
+  </style>
 </resources>

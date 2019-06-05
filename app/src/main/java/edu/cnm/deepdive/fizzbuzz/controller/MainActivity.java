@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 import androidx.preference.PreferenceManager;
@@ -167,6 +168,8 @@ public class MainActivity extends AppCompatActivity
         game = new Game(timeLimit, numDigits, gameDuration);
         gameTimeElapsed = 0;
         complete = false;
+        Toast.makeText(this, R.string.reset_message, Toast.LENGTH_LONG).show();
+        //don't even make it a persistent object that stays until the garbage collector comes around
         pauseGame();
         break;
       case R.id.play:
@@ -180,19 +183,22 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
         break;
       case R.id.status:
-        intent = new Intent(this, StatusActivity.class);
-        intent.putExtra(getString(R.string.game_data_key), game);
-        startActivity(intent);//when we creat an intent to start and activity, we can attach
-        // data to our intent saying, "Here, carry this forward and allow the activity to take the
-        // data that you carry with you."
+        showStats();
         //TODO Write game data to intent.
-
         break;
       default:
         handled = super.onOptionsItemSelected(item);
         break;
     }
     return handled;
+  }
+
+  private void showStats() {
+    Intent intent = new Intent(this, StatusActivity.class);
+    intent.putExtra(getString(R.string.game_data_key), game);
+    startActivity(intent);//when we create an intent to start and activity, we can attach
+    // data to our intent saying, "Here, carry this forward and allow the activity to take the
+    // data that you carry with you."
   }
 
   /**
@@ -230,7 +236,7 @@ public class MainActivity extends AppCompatActivity
     readSettings();
     pauseGame();
     game = new Game(timeLimit, numDigits, gameDuration);
-
+    gameTimeElapsed = 0;
     // TODO Set any necessary flags, etc. to indicate game should be restarted.
   }
 
@@ -374,7 +380,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void run() {
       complete = true;
-      runOnUiThread(MainActivity.this::pauseGame);//learn this lambda
+      runOnUiThread(() -> {
+        pauseGame();
+      Toast.makeText(MainActivity.this, "Time's up!", Toast.LENGTH_LONG).show();
+      //knows the instance of main activity, not the instance of the task within which it lies
+        showStats();
+      });//learn this lambda
     }
   }
 
