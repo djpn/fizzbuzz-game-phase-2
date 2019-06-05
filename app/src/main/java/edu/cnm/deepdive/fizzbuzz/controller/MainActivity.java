@@ -81,10 +81,12 @@ public class MainActivity extends AppCompatActivity
     readSettings();
     gameDataKey = getString(R.string.game_time_key);
     gameTimeElapsedKey = getString(R.string.game_time_elapsed_key);
-  clockFormat = getString(R.string.clock_format);
+    clockFormat = getString(R.string.clock_format);
     if (savedInstanceState != null) {
       game = (Game) savedInstanceState.getSerializable(gameDataKey);
       gameTimeElapsed = savedInstanceState.getLong(gameTimeElapsedKey, 0);
+      gameTimerStart = System.currentTimeMillis();
+      updateClock();
     }
     if (game == null) {
       initGame();
@@ -295,8 +297,8 @@ public class MainActivity extends AppCompatActivity
   }
 
   private void updateClock() {
-    long remaining = gameDuration * 1000L - (System.currentTimeMillis() - gameTimerStart +
-        gameTimeElapsed);
+    long remaining = (running || gameTimeElapsed > 0) ? gameDuration * 1000L -
+        (System.currentTimeMillis() - gameTimerStart + gameTimeElapsed) : gameDuration * 1000L;
     int minutes;
     double seconds;
     if (remaining > 0) {
@@ -307,7 +309,7 @@ public class MainActivity extends AppCompatActivity
       minutes = 0;
       seconds = 0;
     }
-  clockDisplay.setText(String.format(clockFormat, minutes, seconds));
+    clockDisplay.setText(String.format(clockFormat, minutes, seconds));
 
   }
 
@@ -438,46 +440,53 @@ public class MainActivity extends AppCompatActivity
 
     private float originX;
     private float originY;
+    private int dragValue;
 
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-      valueDisplay.setTranslationX(e2.getX() - originX);
-      valueDisplay.setTranslationY(e2.getY() - originY);
-      return true;
+      boolean handled = false;
+      if (value == dragValue) {
+        valueDisplay.setTranslationX(e2.getX() - originX);
+        valueDisplay.setTranslationY(e2.getY() - originY);
+        handled = true;
+      }
+      return handled;
     }
 
     @Override
     public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
       boolean handled = false;
-      int containerHeight = valueContainer.getHeight();
-      int containerWidth = valueContainer.getWidth();
-      int radiusX = containerWidth / RADIUS_FACTOR;
-      int radiusY = containerHeight / RADIUS_FACTOR;
-      double deltaX = e2.getX() - e1.getX();
-      double deltaY = e2.getY() - e1.getY();
-      double ellipticalDistance =
-          deltaX * deltaX / radiusX / radiusX + deltaY * deltaY / radiusY / radiusY;
-      double speed = Math.hypot(velocityX, velocityY);
-      if (speed >= SPEED_THRESHOLD && ellipticalDistance >= 1) {
-        stopValueTimer();
-        Category selection;
-        if (Math.abs(deltaY) * containerWidth <= Math.abs(deltaX) * containerHeight) {
-          if (deltaX > 0) {
-            selection = Category.BUZZ;
+      if (value == dragValue) {
+        int containerHeight = valueContainer.getHeight();
+        int containerWidth = valueContainer.getWidth();
+        int radiusX = containerWidth / RADIUS_FACTOR;
+        int radiusY = containerHeight / RADIUS_FACTOR;
+        double deltaX = e2.getX() - e1.getX();
+        double deltaY = e2.getY() - e1.getY();
+        double ellipticalDistance =
+            deltaX * deltaX / radiusX / radiusX + deltaY * deltaY / radiusY / radiusY;
+        double speed = Math.hypot(velocityX, velocityY);
+        if (speed >= SPEED_THRESHOLD && ellipticalDistance >= 1) {
+          stopValueTimer();
+          Category selection;
+          if (Math.abs(deltaY) * containerWidth <= Math.abs(deltaX) * containerHeight) {
+            if (deltaX > 0) {
+              selection = Category.BUZZ;
+            } else {
+              selection = Category.FIZZ;
+            }
           } else {
-            selection = Category.FIZZ;
+            if (deltaY > 0) {
+              selection = Category.NEITHER;
+            } else {
+              selection = Category.FIZZ_BUZZ;
+            }
           }
-        } else {
-          if (deltaY > 0) {
-            selection = Category.NEITHER;
-          } else {
-            selection = Category.FIZZ_BUZZ;
-          }
+          recordRound(selection);
+          updateValue();
+          startValueTimer();
+          handled = true;
         }
-        recordRound(selection);
-        updateValue();
-        startValueTimer();
-        handled = true;
       }
       return handled;
     }
@@ -488,6 +497,7 @@ public class MainActivity extends AppCompatActivity
       if (displayRect.contains(Math.round(evt.getX()), Math.round(evt.getY()))) {
         originX = evt.getX() - valueDisplay.getTranslationX();
         originY = evt.getY() - valueDisplay.getTranslationY();
+        dragValue = value;
         handled = true;
       }
       return handled;
