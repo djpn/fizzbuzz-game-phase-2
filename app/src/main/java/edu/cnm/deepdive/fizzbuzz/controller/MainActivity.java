@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity
       gameTimeElapsed = savedInstanceState.getLong(gameTimeElapsedKey, 0);
     }
     if (game == null) {
-      game = new Game(timeLimit, numDigits, gameDuration);
+      initGame();
     }
 
   }
@@ -165,9 +165,7 @@ public class MainActivity extends AppCompatActivity
     switch (item.getItemId()) {
       case R.id.reset:
         //TODO Combine invocations of Game constructor.
-        game = new Game(timeLimit, numDigits, gameDuration);
-        gameTimeElapsed = 0;
-        complete = false;
+        initGame();
         Toast.makeText(this, R.string.reset_message, Toast.LENGTH_LONG).show();
         //don't even make it a persistent object that stays until the garbage collector comes around
         pauseGame();
@@ -235,8 +233,7 @@ public class MainActivity extends AppCompatActivity
   public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
     readSettings();
     pauseGame();
-    game = new Game(timeLimit, numDigits, gameDuration);
-    gameTimeElapsed = 0;
+    initGame();
     // TODO Set any necessary flags, etc. to indicate game should be restarted.
   }
 
@@ -262,8 +259,7 @@ public class MainActivity extends AppCompatActivity
   private void resumeGame() {
     running = true;
     if (game == null) {
-      game = new Game(timeLimit, numDigits, gameDuration);
-      gameTimeElapsed = 0;
+      initGame();
     }
     updateValue();
     startGameTimer();
@@ -352,12 +348,19 @@ public class MainActivity extends AppCompatActivity
       valueTimer.schedule(new TimeoutTask(), timeLimit * 1000);
     }
   }
+
   private void startGameTimer() {
     gameTimer = new Timer();
-    gameTimer.schedule(new GameTimeoutTask(), gameDuration * 1000L - gameTimeElapsed );
+    gameTimer.schedule(new GameTimeoutTask(), gameDuration * 1000L - gameTimeElapsed);
     gameTimerStart = System.currentTimeMillis();
-
   }
+
+  private void initGame() {
+    game = new Game(timeLimit, numDigits, gameDuration);
+    complete = false;
+    gameTimeElapsed = 0;
+  }
+
   private class TimeoutTask extends TimerTask {
 
     @Override
@@ -382,8 +385,9 @@ public class MainActivity extends AppCompatActivity
       complete = true;
       runOnUiThread(() -> {
         pauseGame();
-      Toast.makeText(MainActivity.this, "Time's up!", Toast.LENGTH_LONG).show();
-      //knows the instance of main activity, not the instance of the task within which it lies
+        Toast.makeText(MainActivity.this, getString(R.string.time_expired_message),
+            Toast.LENGTH_LONG).show();
+        //knows the instance of main activity, not the instance of the task within which it lies
         showStats();
       });//learn this lambda
     }

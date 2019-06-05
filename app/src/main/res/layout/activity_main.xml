@@ -7,8 +7,8 @@
   android:layout_height="match_parent"
   tools:context=".controller.MainActivity">
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/correct_fizzbuzz_indicator"
     android:src="@drawable/correct_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
@@ -19,8 +19,8 @@
     android:alpha="0"
     />
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/incorrect_fizzbuzz_indicator"
     android:src="@drawable/incorrect_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
@@ -30,8 +30,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/correct_fizz_indicator"
     android:src="@drawable/correct_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
@@ -41,8 +41,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/incorrect_fizz_indicator"
     android:src="@drawable/incorrect_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
@@ -52,8 +52,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/correct_buzz_indicator"
     android:src="@drawable/correct_indicator"
     app:layout_constraintLeft_toRightOf="parent"
@@ -63,8 +63,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/incorrect_buzz_indicator"
     android:src="@drawable/incorrect_indicator"
     app:layout_constraintLeft_toRightOf="parent"
@@ -74,8 +74,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/correct_neither_indicator"
     android:src="@drawable/correct_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
@@ -85,8 +85,8 @@
     android:visibility="visible"
     android:alpha="0"/>
   <ImageView
-    android:layout_width="100dp"
-    android:layout_height="100dp"
+    android:layout_width="@dimen/indicator_size"
+    android:layout_height="@dimen/indicator_size"
     android:id="@+id/incorrect_neither_indicator"
     android:src="@drawable/incorrect_indicator"
     app:layout_constraintLeft_toLeftOf="parent"
